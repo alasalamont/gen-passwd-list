@@ -38,12 +38,13 @@ suffixes = [
 def display_how_it_works():
     print(f"""
 {Fore.YELLOW}HOW THIS SCRIPT WORKS:
-{Fore.GREEN}+ Generates a list of passwords (combinations.txt) based on keyword combinations and leetspeak transformations.
-+ Special characters are inserted only between keywords.
-+ The output includes single keywords, combinations, and leetspeak variations, and adds specific suffixes to each.
-
+{Fore.GREEN}
+1. Generates a list of password (combinations.txt)
+2. If keyword has special chars, this special char will be insert between words
+3. Convert words with leetspeak, lowercase, uppercase
+4. Add the above specific suffixes to each
 {Fore.YELLOW}WHY NO SPECIAL CHARS AT THE END?
-{Fore.GREEN}+ The generated combinations.txt will be used by munge.py, which also adds the most common suffixes at the end.
+{Fore.GREEN}+ Because the script already added the suffixes at the end.
 {Style.RESET_ALL}
 """)
 
