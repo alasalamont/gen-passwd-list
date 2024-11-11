@@ -16,43 +16,59 @@ leetspeak_map = {
     'g': ['g', '9']
 }
 
+# List of suffixes to add
+suffixes = [
+    "`", "``", "```", "!", "!!", "!!!", "@", "@@", "@@@", "#", "##", "###", "$", "$$", "$$$", ",", ",,", ",,,",
+    ".", "..", "...", "=", "==", "===", "?", "??", "???", "!@#", "!@#!@#", "#@!", "#@!#@!", "~!@#", "#@!~",
+    "~!@#$", "$#@!~", "123", "123`", "123!", "123@", "123#", "123123", "123123`", "123123!", "123123@", 
+    "123123#", "321", "321`", "321!", "321@", "321#", "321312", "321321`", "321321!", "321321@", "321321#",
+    "456", "456`", "456!", "456@", "456#", "456456", "456456`", "456456!", "456456@", "456456#", "654", "654`",
+    "654!", "654@", "654#", "654654", "654654`", "654654!", "654654@", "654654#", "789", "789`", "789!", "789@",
+    "789#", "789789", "789789`", "789789!", "789789@", "789789#", "987", "987`", "987!", "987@", "987#", "987987",
+    "987987`", "987987!", "987987@", "987987#", "asd", "asdasd", "qwe", "qweqwe", "zxc", "zxczxc", "ewq", "ewqewq",
+    "qwerty", "ytrewq", "aaa", "aaaa", "bbb", "bbbb", "ccc", "cccc", "sss", "ssss", "ddd", "dddd", "qqq", "qqqq",
+    "www", "wwww", "eee", "eeee", "1234", "12345", "123456", "1234567", "12345678", "123456789", "0123", "01234",
+    "0123456", "01234567", "012345678", "0123456789", "0", "00", "000", "0000", "11", "111", "1111", "22", "222",
+    "2222", "33", "333", "3333", "44", "444", "4444", "55", "555", "5555", "66", "666", "6666", "77", "777", "7777",
+    "88", "888", "8888", "99", "999", "9999", "2020", "2021", "2022", "2023", "2024", "2025", "2026", "1000", 
+    "2000", "3000", "4000", "5000", "6000", "7000", "8000", "9000"
+]
+
 # Function to display how the script works
 def display_how_it_works():
     print(f"""
 {Fore.YELLOW}HOW THIS SCRIPT WORKS:
 {Fore.GREEN}+ Generates a list of passwords (combinations.txt) based on keyword combinations and leetspeak transformations.
-+ Special characters can appear at the beginning, between keywords, and at the end if needed.
-+ The output includes single keywords, combinations, and leetspeak variations with uppercase and lowercase.
++ Special characters are inserted only between keywords.
++ The output includes single keywords, combinations, and leetspeak variations, and adds specific suffixes to each.
 
 {Fore.YELLOW}WHY NO SPECIAL CHARS AT THE END?
 {Fore.GREEN}+ The generated combinations.txt will be used by munge.py, which also adds the most common suffixes at the end.
 {Style.RESET_ALL}
 """)
 
-# Function to return lowercase, capitalized, uppercase, and leetspeak versions of a word
+# Function to return lowercase and leetspeak versions of a word
 def generate_variants(word):
     variants = set()  # Use a set to avoid duplicates
 
-    # Generate lowercase, uppercase, and capitalized versions
-    base_variants = [word.lower(), word.capitalize(), word.upper()]
-    for base_word in base_variants:
-        variants.add(base_word)
+    # Generate lowercase version
+    base_word = word.lower()
+    variants.add(base_word)
 
-        # Generate leetspeak transformations for each character in the base word
-        leetspeak_combinations = []
-        for char in base_word:
-            leetspeak_combinations.append(leetspeak_map.get(char.lower(), [char]))  # Get leetspeak options or the char itself
+    # Generate leetspeak transformations for each character in the base word
+    leetspeak_combinations = []
+    for char in base_word:
+        leetspeak_combinations.append(leetspeak_map.get(char, [char]))  # Get leetspeak options or the char itself
 
-        # Create all possible leetspeak transformations for each base variant
-        for leetspeak_variant in itertools.product(*leetspeak_combinations):
-            leetspeak_word = ''.join(leetspeak_variant)
-            variants.add(leetspeak_word)
+    # Create all possible leetspeak transformations
+    for leetspeak_variant in itertools.product(*leetspeak_combinations):
+        leetspeak_word = ''.join(leetspeak_variant)
+        variants.add(leetspeak_word)
 
     return list(variants)  # Return as list for compatibility with itertools
 
 # Function to filter out combinations that end with special characters
 def is_valid_combination(combination):
-    # Ensure that the last element is not a special character
     return combination[-1].isalnum()
 
 # Get user input for keywords
@@ -92,16 +108,7 @@ def generate_combinations(keywords, special_chars):
         for variant in generate_variants(word):
             results.add(variant)
     
-    # Add keyword combinations without special chars (2 to 4 length combinations)
-    for length in range(2, 5):
-        combinations = itertools.permutations(keywords, length)
-        for combination in combinations:
-            if is_valid_combination(combination):
-                variants = [generate_variants(word) for word in combination]
-                for variant_combination in itertools.product(*variants):
-                    results.add(''.join(variant_combination))
-    
-    # Add special character combinations (at the beginning, between, and end)
+    # Add keyword combinations with special chars only between keywords (2 to 4 length combinations)
     for length in range(2, 5):
         combinations = itertools.permutations(keywords, length)
         for combination in combinations:
@@ -109,24 +116,21 @@ def generate_combinations(keywords, special_chars):
             for variant_combination in itertools.product(*variants):
                 variant_combination = list(variant_combination)
                 
-                # Special characters at the beginning
-                for special_char in special_chars:
-                    with_special_at_begin = [special_char] + variant_combination
-                    results.add(''.join(with_special_at_begin))
-                
-                # Special characters between keywords
+                # Special characters between keywords only
                 for i in range(len(variant_combination) - 1):
                     for special_char in special_chars:
                         with_special_in_between = variant_combination[:i + 1] + [special_char] + variant_combination[i + 1:]
                         if is_valid_combination(with_special_in_between):
                             results.add(''.join(with_special_in_between))
-                
-                # Special characters at the end
-                for special_char in special_chars:
-                    with_special_at_end = variant_combination + [special_char]
-                    results.add(''.join(with_special_at_end))
 
-    return results
+    # Add suffixes to each combination
+    final_results = set()
+    for result in results:
+        final_results.add(result)  # Original combination without suffix
+        for suffix in suffixes:
+            final_results.add(result + suffix)
+
+    return final_results
 
 def main():
     # Display the explanation before the script runs
